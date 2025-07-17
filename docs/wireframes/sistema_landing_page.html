@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Agendamento de Férias</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+        
+        /* === LANDING PAGE === */
+        .landing-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .landing-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.1);
+            z-index: 1;
+        }
+        
+        .landing-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 60px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .landing-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+            border-radius: 24px 24px 0 0;
+        }
+        
+        .main-logo {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 30px;
+            margin: 0 auto 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.3);
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .main-title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+        
+        .main-subtitle {
+            font-size: 1.3rem;
+            color: #6b7280;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+        
+        .feature-item {
+            text-align: center;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        .feature-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+        
+        .feature-description {
+            font-size: 0.9rem;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+        
+        .access-selection {
+            margin-top: 30px;
+        }
+        
+        .selection-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 30px;
+        }
+        
+        .access-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .access-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .access-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent, rgba(102, 126, 234, 0.05));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .access-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
+        }
+        
+        .access-card:hover::before {
+            opacity: 1;
+        }
+        
+        .access-card.employee {
+            border-top: 5px solid #10b981;
+        }
+        
+        .access-card.manager {
+            border-top: 5px solid #f59e0b;
+        }
+        
+        .access-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .access-card.employee .access-icon {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        
+        .access-card.manager .access-icon {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+        
+        .access-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .access-description {
+            font-size: 1rem;
+            color: #6b7280;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .access-features {
+            list-style: none;
+            text-align: left;
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .access-features li {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin-bottom: 8px;
+            position: relative;
+            padding-left: 20px;
+        }
+        
+        .access-features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+        }
+        
+        .access-card.manager .access-features li::before {
+            color: #f59e0b;
+        }
+        
+        .access-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .access-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .company-info {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .company-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #6b7280;
+            margin-bottom: 10px;
+        }
+        
+        .company-description {
+            font-size: 0.9rem;
+            color: #9ca3af;
+            line-height: 1.5;
+        }
+        
+        /* === TELAS DE LOGIN === */
+        .login-container {
+            display: none;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #f3f4f6;
+            color: #374151;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            background: #e5e7eb;
+        }
+        
+        .login-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 20px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .login-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+        
+        .login-subtitle {
+            font-size: 1rem;
+            color: #6b7280;
+            margin-bottom: 40px;
+        }
+        
+        .user-type-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+        
+        .user-type-badge.employee {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        
+        .user-type-badge.manager {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .login-button {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .demo-credentials {
+            background: #f0f9ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #0ea5e9;
+        }
+        
+        .demo-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #0369a1;
+            margin-bottom: 8px;
+        }
+        
+        .demo-info {
+            font-size: 0.8rem;
+            color: #0369a1;
+            line-height: 1.4;
+        }
+        
+        /* === RESPONSIVO === */
+        @media (max-width: 768px) {
+            .landing-content {
+                padding: 40px 30px;
+            }
+            
+            .main-title {
+                font-size: 2.2rem;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .access-cards {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .access-card {
+                padding: 30px 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .landing-content {
+                padding: 30px 20px;
+            }
+            
+            .main-title {
+                font-size: 1.8rem;
+            }
+            
+            .main-subtitle {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- LANDING PAGE -->
+    <div id="landingPage" class="landing-container">
+        <div class="landing-content">
+            <div class="main-logo">SF</div>
+            <h1 class="main-title">Sistema de Agendamento de Férias</h1>
+            <p class="main-subtitle">
+                Gerencie solicitações de férias de forma simples e eficiente. 
+                Uma plataforma completa para funcionários e gestores.
+            </p>
+            
+            <div class="features-grid">
+                <div class="feature-item">
+                    <span class="feature-icon">📅</span>
+                    <div class="feature-title">Solicitação Rápida</div>
+                    <div class="feature-description">Interface intuitiva para solicitar férias em poucos cliques</div>
+                </div>
+                
+                <div class="feature-item">
+                    <span class="feature-icon">✅</span>
+                    <div class="feature-title">Aprovação Inteligente</div>
+                    <div class="feature-description">Sistema de aprovação com notificações em tempo real</div>
+                </div>
+                
+                <div class="feature-item">
+                    <span class="feature-icon">📊</span>
+                    <div class="feature-title">Controle Completo</div>
+                    <div class="feature-description">Dashboards e relatórios para gestão eficaz</div>
+                </div>
+            </div>
+            
+            <div class="access-selection">
+                <h2 class="selection-title">Como você deseja acessar?</h2>
+                
+                <div class="access-cards">
+                    <div class="access-card employee" onclick="goToLogin('employee')">
+                        <div class="access-icon">👤</div>
+                        <h3 class="access-title">Funcionário</h3>
+                        <p class="access-description">Acesso para solicitar e acompanhar suas férias</p>
+                        
+                        <ul class="access-features">
+                            <li>Solicitar férias</li>
+                            <li>Acompanhar status</li>
+                            <li>Ver histórico</li>
+                            <li>Receber notificações</li>
+                        </ul>
+                        
+                        <button class="access-button">Acessar como Funcionário</button>
+                    </div>
+                    
+                    <div class="access-card manager" onclick="goToLogin('manager')">
+                        <div class="access-icon">👔</div>
+                        <h3 class="access-title">Gestor</h3>
+                        <p class="access-description">Acesso para aprovar e gerenciar férias da equipe</p>
+                        
+                        <ul class="access-features">
+                            <li>Aprovar solicitações</li>
+                            <li>Gerenciar equipe</li>
+                            <li>Visualizar relatórios</li>
+                            <li>Controlar calendário</li>
+                        </ul>
+                        
+                        <button class="access-button">Acessar como Gestor</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="company-info">
+                <div class="company-name">Empresa Tech LTDA</div>
+                <div class="company-description">
+                    Sistema desenvolvido para otimizar o processo de solicitação e aprovação de férias, 
+                    proporcionando maior agilidade e transparência para toda a equipe.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIN FUNCIONÁRIO -->
+    <div id="employeeLogin" class="login-container">
+        <div class="login-card">
+            <button class="back-button" onclick="goToLanding()">← Voltar</button>
+            
+            <div class="login-logo">SF</div>
+            <h2 class="login-title">Sistema de Férias</h2>
+            <p class="login-subtitle">Acesso do Funcionário</p>
+            
+            <div class="user-type-badge employee">👤 Funcionário</div>
+            
+            <div class="demo-credentials">
+                <div class="demo-title">Credenciais de Demonstração:</div>
+                <div class="demo-info">
+                    <strong>Email:</strong> joao.santos@empresa.com<br>
+                    <strong>Senha:</strong> 123456
+                </div>
+            </div>
+            
+            <form id="employeeLoginForm">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="employeeEmail" placeholder="seu.email@empresa.com" value="joao.santos@empresa.com">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Senha</label>
+                    <input type="password" class="form-input" id="employeePassword" placeholder="••••••••" value="123456">
+                </div>
+                
+                <button type="submit" class="login-button">Entrar no Sistema</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- LOGIN GESTOR -->
+    <div id="managerLogin" class="login-container">
+        <div class="login-card">
+            <button class="back-button" onclick="goToLanding()">← Voltar</button>
+            
+            <div class="login-logo">SF</div>
+            <h2 class="login-title">Sistema de Férias</h2>
+            <p class="login-subtitle">Acesso do Gestor</p>
+            
+            <div class="user-type-badge manager">👔 Gestor</div>
+            
+            <div class="demo-credentials">
+                <div class="demo-title">Credenciais de Demonstração:</div>
+                <div class="demo-info">
+                    <strong>Email:</strong> maria.silva@empresa.com<br>
+                    <strong>Senha:</strong> manager123
+                </div>
+            </div>
+            
+            <form id="managerLoginForm">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="managerEmail" placeholder="gestor@empresa.com" value="maria.silva@empresa.com">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Senha</label>
+                    <input type="password" class="form-input" id="managerPassword" placeholder="••••••••" value="manager123">
+                </div>
+                
+                <button type="submit" class="login-button">Entrar no Sistema</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Controle de navegação entre telas
+        function goToLogin(userType) {
+            document.getElementById('landingPage').style.display = 'none';
+            
+            if (userType === 'employee') {
+                document.getElementById('employeeLogin').style.display = 'flex';
+                document.getElementById('employeeEmail').focus();
+            } else if (userType === 'manager') {
+                document.getElementById('managerLogin').style.display = 'flex';
+                document.getElementById('managerEmail').focus();
+            }
+        }
+        
+        function goToLanding() {
+            document.getElementById('landingPage').style.display = 'flex';
+            document.getElementById('employeeLogin').style.display = 'none';
+            document.getElementById('managerLogin').style.display = 'none';
+        }
+        
+        // Sistema de login funcionário
+        document.getElementById('employeeLoginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('employeeEmail').value;
+            const password = document.getElementById('employeePassword').value;
+            
+            if (email && password) {
+                // Simular login bem-sucedido
+                alert('Login realizado com sucesso! Redirecionando para o sistema do funcionário...');
+                
+                // Aqui você redirecionaria para o sistema do funcionário
+                // window.location.href = 'sistema-funcionario.html';
+                
+                // Para demonstração, apenas mostramos uma mensagem
+                showSuccessMessage('Você seria redirecionado para o sistema do funcionário.');
+            } else {
+                alert('Por favor, preencha todos os campos!');
+            }
+        });
+        
+        // Sistema de login gestor
+        document.getElementById('managerLoginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('managerEmail').value;
+            const password = document.getElementById('managerPassword').value;
+            
+            if (email && password) {
+                // Simular login bem-sucedido
+                alert('Login realizado com sucesso! Redirecionando para o sistema do gestor...');
+                
+                // Aqui você redirecionaria para o sistema do gestor
+                // window.location.href = 'sistema-gestor.html';
+                
+                // Para demonstração, apenas mostramos uma mensagem
+                showSuccessMessage('Você seria redirecionado para o sistema do gestor.');
+            } else {
+                alert('Por favor, preencha todos os campos!');
+            }
+        });
+        
+        // Função para mostrar mensagem de sucesso
+        function showSuccessMessage(message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #dcfce7;
+                color: #166534;
+                padding: 15px 20px;
+                border-radius: 10px;
+                border-left: 4px solid #10b981;
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                font-weight: 500;
+            `;
+            messageDiv.textContent = message;
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 4000);
+        }
+        
+        // Animações e efeitos
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animação de entrada para os cards
+            const cards = document.querySelectorAll('.access-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 200);
+            });
+            
+            // Efeito de hover nos cards
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-8px) scale(1.02)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        });
+        
+        // Efeito de partículas no fundo (opcional)
+        function createParticles() {
+            const container = document.getElementById('landingPage');
+            const particleCount = 50;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.style.cssText = `
+                    position: absolute;
+                    width: 4px;
+                    height: 4px;
+                    background: rgba(255, 255, 255, 0.5);
+                    border-radius: 50%;
+                    animation: float ${3 + Math.random() * 4}s ease-in-out infinite;
+                    left: ${Math.random() * 100}%;
+                    top: ${Math.random() * 100}%;
+                    animation-delay: ${Math.random() * 2}s;
+                `;
+                container.appendChild(particle);
+            }
+        }
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+        });
+    </script>
+</body>
+</html>
