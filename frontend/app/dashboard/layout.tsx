@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/app/contexts/AuthContext";
 import {
   CalendarDays,
   Home,
@@ -12,6 +13,7 @@ import {
   LogOut,
   Menu,
   X,
+  Users,
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -20,10 +22,11 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
+  const { user, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
-    // TODO: Implement actual logout
+    logout();
     router.push("/login");
   };
 
@@ -32,6 +35,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: "Minhas Férias", href: "/dashboard/vacation-requests", icon: CalendarDays },
     { name: "Notificações", href: "/dashboard/notifications", icon: Bell },
     { name: "Histórico", href: "/dashboard/history", icon: History },
+    ...(user?.role === "manager" || user?.role === "admin" 
+      ? [{ name: "Gestão", href: "/dashboard/manager", icon: Users }]
+      : []),
   ];
 
   return (
@@ -63,9 +69,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="hidden md:flex items-center space-x-4">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-semibold">
-                  JS
+                  {user?.name.split(' ').map(n => n[0]).join('') || 'U'}
                 </div>
-                <span className="text-sm font-medium">João Santos</span>
+                <span className="text-sm font-medium">{user?.name || 'Usuário'}</span>
               </div>
               <Button
                 variant="ghost"
