@@ -48,5 +48,11 @@ func Migrate(db *gorm.DB) error {
 	}
 
 	log.Println("Database migration completed successfully")
+
+	// Seed database with initial data
+	if err := SeedDatabase(db); err != nil {
+		return fmt.Errorf("failed to seed database: %w", err)
+	}
+
 	return nil
 }
