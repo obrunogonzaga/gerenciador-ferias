@@ -6,11 +6,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/app/contexts/AuthContext";
 import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("joao.santos@empresa.com");
+  const { login } = useAuth();
+  const [email, setEmail] = useState("maria.gestora@empresa.com");
   const [password, setPassword] = useState("123456");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -19,9 +21,30 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // TODO: Implement actual login
-      // For now, just simulate a delay and redirect
+      // TODO: Implement actual login API call
+      // For now, simulate login with mock user data
       await new Promise((resolve) => setTimeout(resolve, 1000));
+      
+      // Mock user data based on email for testing
+      const mockUser = email === "maria.gestora@empresa.com" 
+        ? {
+            id: "manager-1",
+            name: "Maria Gestora",
+            email: "maria.gestora@empresa.com",
+            role: "manager" as const,
+            department: "Gestão",
+            vacationBalance: 30,
+          }
+        : {
+            id: "emp-1",
+            name: "João Santos",
+            email: "joao.santos@empresa.com",
+            role: "employee" as const,
+            department: "Desenvolvimento",
+            vacationBalance: 22,
+          };
+
+      login("mock-token", mockUser);
       router.push("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
@@ -47,6 +70,11 @@ export default function LoginPage() {
               Sistema de Férias
             </h1>
             <p className="text-gray-600">Gerenciamento de Solicitações</p>
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg text-xs text-blue-700">
+              <p><strong>Gestor:</strong> maria.gestora@empresa.com</p>
+              <p><strong>Funcionário:</strong> joao.santos@empresa.com</p>
+              <p><strong>Senha:</strong> 123456</p>
+            </div>
           </div>
 
           {/* Form */}
