@@ -425,6 +425,60 @@ func DeleteVacationRequest(db *gorm.DB) gin.HandlerFunc {
 }
 
 // Helper function to calculate business days
+func GetVacationRequestStats(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userIDStr, exists := c.Get(middleware.UserIDKey)
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "User ID not found in context",
+			})
+			return
+		}
+
+		userID, err := uuid.Parse(userIDStr.(string))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid user ID format",
+			})
+			return
+		}
+
+		// Get user's vacation request statistics
+		var stats struct {
+			TotalRequests    int64 `json:"total_requests"`
+			PendingRequests  int64 `json:"pending_requests"`
+			ApprovedRequests int64 `json:"approved_requests"`
+			RejectedRequests int64 `json:"rejected_requests"`
+			TotalDaysUsed    int   `json:"total_days_used"`
+			TotalDaysPending int   `json:"total_days_pending"`
+		}
+
+		// Count total requests
+		db.Model(&models.VacationRequest{}).Where("user_id = ?", userID).Count(&stats.TotalRequests)
+
+		// Count by status
+		db.Model(&models.VacationRequest{}).Where("user_id = ? AND status = ?", userID, "pending").Count(&stats.PendingRequests)
+		db.Model(&models.VacationRequest{}).Where("user_id = ? AND status = ?", userID, "approved").Count(&stats.ApprovedRequests)
+		db.Model(&models.VacationRequest{}).Where("user_id = ? AND status = ?", userID, "rejected").Count(&stats.RejectedRequests)
+
+		// Calculate total days used (approved requests)
+		var approvedRequests []models.VacationRequest
+		db.Where("user_id = ? AND status = ?", userID, "approved").Find(&approvedRequests)
+		for _, req := range approvedRequests {
+			stats.TotalDaysUsed += req.BusinessDays
+		}
+
+		// Calculate total days pending
+		var pendingRequests []models.VacationRequest
+		db.Where("user_id = ? AND status = ?", userID, "pending").Find(&pendingRequests)
+		for _, req := range pendingRequests {
+			stats.TotalDaysPending += req.BusinessDays
+		}
+
+		c.JSON(http.StatusOK, stats)
+	}
+}
+
 func calculateBusinessDays(start, end time.Time) int {
 	days := 0
 	for d := start; !d.After(end); d = d.AddDate(0, 0, 1) {

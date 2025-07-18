@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, Users, Clock, CheckCircle, XCircle, Eye, MessageSquare } from "lucide-react";
+import { Calendar, Users, Clock, CheckCircle, XCircle, Eye } from "lucide-react";
 
 // Dados de exemplo - TODO: buscar da API
 const managerStats = {
@@ -97,8 +97,24 @@ const teamCalendar = [
   },
 ];
 
+interface VacationRequestType {
+  id: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    department: string;
+  };
+  startDate: string;
+  endDate: string;
+  businessDays: number;
+  reason: string;
+  emergencyContact: string;
+  createdAt: string;
+}
+
 export default function ManagerDashboard() {
-  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [selectedRequest, setSelectedRequest] = useState<VacationRequestType | null>(null);
   const [approvalComment, setApprovalComment] = useState("");
   const [rejectionComment, setRejectionComment] = useState("");
 
@@ -119,14 +135,14 @@ export default function ManagerDashboard() {
     }
   };
 
-  const handleApprove = (request: any) => {
+  const handleApprove = (request: VacationRequestType) => {
     // TODO: Implementar chamada para API
     console.log("Approving request:", request.id, "with comment:", approvalComment);
     setApprovalComment("");
     alert("Solicitação aprovada com sucesso!");
   };
 
-  const handleReject = (request: any) => {
+  const handleReject = (request: VacationRequestType) => {
     if (!rejectionComment.trim()) {
       alert("Comentário é obrigatório para rejeição");
       return;
@@ -337,7 +353,7 @@ export default function ManagerDashboard() {
                             <div className="flex gap-2 justify-end">
                               <Button variant="outline">Cancelar</Button>
                               <Button 
-                                onClick={() => handleApprove(selectedRequest)}
+                                onClick={() => selectedRequest && handleApprove(selectedRequest)}
                                 className="bg-green-600 hover:bg-green-700"
                               >
                                 Confirmar Aprovação
@@ -383,7 +399,7 @@ export default function ManagerDashboard() {
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
                             <AlertDialogAction 
-                              onClick={() => handleReject(selectedRequest)}
+                              onClick={() => selectedRequest && handleReject(selectedRequest)}
                               className="bg-red-600 hover:bg-red-700"
                             >
                               Confirmar Rejeição

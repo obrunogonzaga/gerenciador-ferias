@@ -8,7 +8,6 @@ import (
 	"github.com/gerenciador-ferias/backend/internal/database"
 	"github.com/gerenciador-ferias/backend/internal/handlers"
 	"github.com/gerenciador-ferias/backend/internal/middleware"
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,17 +26,32 @@ func main() {
 		log.Fatal("Failed to run migrations:", err)
 	}
 
-	// Setup Gin router
-	router := gin.Default()
+	// Setup Gin router without default middlewares
+	router := gin.New()
+	
+	// Add only the logger middleware
+	router.Use(gin.Logger())
+	
+	// Add recovery middleware
+	router.Use(gin.Recovery())
 
-	// Configure CORS
-	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-	}))
+	// Configure CORS middleware - must be first after basic middlewares
+	router.Use(func(c *gin.Context) {
+		// Set CORS headers for all requests
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
+		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Authorization, Accept, X-Requested-With")
+		c.Header("Access-Control-Expose-Headers", "Content-Length, Authorization")
+		c.Header("Access-Control-Max-Age", "43200")
+
+		// Handle preflight OPTIONS requests
+		if c.Request.Method == "OPTIONS" {
+			c.Status(204)
+			return
+		}
+
+		c.Next()
+	})
 
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
@@ -65,14 +79,15 @@ func main() {
 			// Vacation request routes
 			protected.GET("/vacation-requests", handlers.GetVacationRequests(db))
 			protected.POST("/vacation-requests", handlers.CreateVacationRequest(db))
+			protected.GET("/vacation-requests/stats", handlers.GetVacationRequestStats(db))
 			protected.GET("/vacation-requests/:id", handlers.GetVacationRequest(db))
 			protected.PUT("/vacation-requests/:id", handlers.UpdateVacationRequest(db))
 			protected.DELETE("/vacation-requests/:id", handlers.DeleteVacationRequest(db))
 
 			// Manager routes
 			protected.GET("/manager/pending-requests", handlers.GetPendingRequests(db))
-			protected.PUT("/vacation-requests/:id/approve", handlers.ApproveVacationRequest(db))
-			protected.PUT("/vacation-requests/:id/reject", handlers.RejectVacationRequest(db))
+			protected.POST("/manager/approve/:id", handlers.ApproveVacationRequest(db))
+			protected.POST("/manager/reject/:id", handlers.RejectVacationRequest(db))
 			protected.GET("/manager/team-calendar", handlers.GetTeamCalendar(db))
 			protected.GET("/manager/team-stats", handlers.GetTeamStats(db))
 

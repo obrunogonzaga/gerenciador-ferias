@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format, differenceInBusinessDays, addDays, isBefore, isWeekend } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar as CalendarIcon, ArrowLeft, Info, CheckCircle2 } from "lucide-react";
+import { Calendar as CalendarIcon, ArrowLeft, Info, CheckCircle2, AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,16 +16,20 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/app/contexts/AuthContext";
+import { useUserStats } from "@/hooks/useUserStats";
+import { vacationAPI, type VacationRequestPayload } from "@/lib/api";
 import Link from "next/link";
 
 // Schema de validação
 const vacationRequestSchema = z.object({
   startDate: z.date({
-    required_error: "Data de início é obrigatória",
+    message: "Data de início é obrigatória",
   }),
   endDate: z.date({
-    required_error: "Data de fim é obrigatória",
+    message: "Data de fim é obrigatória",
   }),
   reason: z.string().optional(),
   emergencyContact: z.string().min(1, "Contato de emergência é obrigatório"),
@@ -53,8 +57,11 @@ type VacationRequestForm = z.infer<typeof vacationRequestSchema>;
 
 export default function NewVacationRequestPage() {
   const router = useRouter();
+  const { user, updateUser } = useAuth();
+  const { stats, loading: statsLoading, refetch: refetchStats } = useUserStats();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const form = useForm<VacationRequestForm>({
     resolver: zodResolver(vacationRequestSchema),
@@ -78,22 +85,47 @@ export default function NewVacationRequestPage() {
 
   const onSubmit = async (data: VacationRequestForm) => {
     setIsSubmitting(true);
+    setError(null);
+    
     try {
-      // TODO: Implementar chamada para API
-      console.log("Vacation request data:", data);
+      // Check if user has enough vacation balance
+      const requestedDays = calculateBusinessDays(data.startDate, data.endDate);
+      const currentBalance = stats?.vacation_balance || user?.vacationBalance || 0;
       
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      if (requestedDays > currentBalance) {
+        throw new Error(`Saldo insuficiente. Você possui ${currentBalance} dias disponíveis e está solicitando ${requestedDays} dias.`);
+      }
+
+      // Prepare API payload
+      const payload: VacationRequestPayload = {
+        start_date: format(data.startDate, 'yyyy-MM-dd'),
+        end_date: format(data.endDate, 'yyyy-MM-dd'),
+        business_days: requestedDays,
+        reason: data.reason || undefined,
+        emergency_contact: data.emergencyContact,
+      };
+
+      // Submit to API
+      await vacationAPI.createRequest(payload);
+      
+      // Update user's vacation balance
+      const newBalance = currentBalance - requestedDays;
+      updateUser({ vacationBalance: newBalance });
+      
+      // Refresh stats
+      await refetchStats();
       
       setShowSuccess(true);
       
-      // Redirecionar após 3 segundos
+      // Redirect after 3 seconds
       setTimeout(() => {
         router.push("/dashboard");
       }, 3000);
       
-    } catch (error) {
-      console.error("Error submitting vacation request:", error);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao enviar solicitação. Tente novamente.';
+      setError(errorMessage);
+      console.error("Error submitting vacation request:", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -255,10 +287,25 @@ export default function NewVacationRequestPage() {
 
                     {/* Mostrar dias calculados */}
                     {startDate && endDate && (
-                      <div className="bg-blue-50 p-4 rounded-lg">
-                        <p className="text-sm text-blue-800">
+                      <div className={cn(
+                        "p-4 rounded-lg",
+                        businessDays > (stats?.vacation_balance || user?.vacationBalance || 0) 
+                          ? "bg-red-50 border border-red-200" 
+                          : "bg-blue-50"
+                      )}>
+                        <p className={cn(
+                          "text-sm",
+                          businessDays > (stats?.vacation_balance || user?.vacationBalance || 0)
+                            ? "text-red-800"
+                            : "text-blue-800"
+                        )}>
                           <strong>Período selecionado:</strong> {businessDays} dias úteis
                         </p>
+                        {businessDays > (stats?.vacation_balance || user?.vacationBalance || 0) && (
+                          <p className="text-sm text-red-700 mt-1">
+                            ⚠️ Saldo insuficiente! Você possui {stats?.vacation_balance || user?.vacationBalance || 0} dias disponíveis.
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>
@@ -305,6 +352,14 @@ export default function NewVacationRequestPage() {
                     />
                   </div>
 
+                  {/* Error Alert */}
+                  {error && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+
                   {/* Botões */}
                   <div className="flex flex-col sm:flex-row gap-3 pt-6">
                     <Button
@@ -312,6 +367,7 @@ export default function NewVacationRequestPage() {
                       variant="outline"
                       onClick={saveDraft}
                       className="sm:w-auto"
+                      disabled={isSubmitting}
                     >
                       Salvar Rascunho
                     </Button>
@@ -337,16 +393,37 @@ export default function NewVacationRequestPage() {
               <CardTitle className="text-lg">Seu Saldo</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-lg text-center">
-                <div className="text-4xl font-bold text-green-700 mb-2">22</div>
-                <div className="text-sm font-medium text-green-600">
-                  dias disponíveis
+              {statsLoading ? (
+                <div className="bg-gray-50 p-6 rounded-lg text-center">
+                  <div className="text-2xl text-gray-400 mb-2">--</div>
+                  <div className="text-sm text-gray-500">Carregando...</div>
                 </div>
-              </div>
-              <div className="mt-4 flex justify-between text-sm text-gray-600">
-                <span>Direito: 30 dias</span>
-                <span>Usado: 8 dias</span>
-              </div>
+              ) : (
+                <>
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-lg text-center">
+                    <div className="text-4xl font-bold text-green-700 mb-2">
+                      {stats?.vacation_balance || user?.vacationBalance || 0}
+                    </div>
+                    <div className="text-sm font-medium text-green-600">
+                      dias disponíveis
+                    </div>
+                  </div>
+                  <div className="mt-4 space-y-2 text-sm text-gray-600">
+                    <div className="flex justify-between">
+                      <span>Direito anual:</span>
+                      <span>30 dias</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Solicitações aprovadas:</span>
+                      <span>{stats?.approved_count || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Pendentes:</span>
+                      <span>{stats?.pending_count || 0}</span>
+                    </div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 

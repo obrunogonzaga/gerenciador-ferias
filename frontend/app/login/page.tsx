@@ -7,47 +7,44 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { authAPI } from "@/lib/api";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
-  const [email, setEmail] = useState("maria.gestora@empresa.com");
-  const [password, setPassword] = useState("123456");
+  const [email, setEmail] = useState("maria.silva@empresa.com");
+  const [password, setPassword] = useState("manager123");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
     try {
-      // TODO: Implement actual login API call
-      // For now, simulate login with mock user data
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Call the real API
+      const response = await authAPI.login(email, password);
       
-      // Mock user data based on email for testing
-      const mockUser = email === "maria.gestora@empresa.com" 
-        ? {
-            id: "manager-1",
-            name: "Maria Gestora",
-            email: "maria.gestora@empresa.com",
-            role: "manager" as const,
-            department: "Gestão",
-            vacationBalance: 30,
-          }
-        : {
-            id: "emp-1",
-            name: "João Santos",
-            email: "joao.santos@empresa.com",
-            role: "employee" as const,
-            department: "Desenvolvimento",
-            vacationBalance: 22,
-          };
+      // Transform API response to match our User interface
+      const userData = {
+        id: response.user.id,
+        name: response.user.name,
+        email: response.user.email,
+        role: response.user.role as "employee" | "manager" | "admin",
+        department: response.user.department,
+        vacationBalance: response.user.vacation_balance,
+      };
 
-      login("mock-token", mockUser);
+      login(response.access_token, userData);
       router.push("/dashboard");
-    } catch (error) {
-      console.error("Login error:", error);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao fazer login. Verifique suas credenciais.';
+      setError(errorMessage);
+      console.error("Login error:", err);
     } finally {
       setIsLoading(false);
     }
@@ -71,11 +68,20 @@ export default function LoginPage() {
             </h1>
             <p className="text-gray-600">Gerenciamento de Solicitações</p>
             <div className="mt-4 p-3 bg-blue-50 rounded-lg text-xs text-blue-700">
-              <p><strong>Gestor:</strong> maria.gestora@empresa.com</p>
+              <p><strong>Gestor:</strong> maria.silva@empresa.com</p>
               <p><strong>Funcionário:</strong> joao.santos@empresa.com</p>
-              <p><strong>Senha:</strong> 123456</p>
+              <p><strong>Senha Manager:</strong> manager123</p>
+              <p><strong>Senha Funcionário:</strong> 123456</p>
             </div>
           </div>
+
+          {/* Error Alert */}
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
