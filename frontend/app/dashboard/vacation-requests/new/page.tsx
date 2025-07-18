@@ -98,8 +98,8 @@ export default function NewVacationRequestPage() {
 
       // Prepare API payload
       const payload: VacationRequestPayload = {
-        start_date: format(data.startDate, 'yyyy-MM-dd'),
-        end_date: format(data.endDate, 'yyyy-MM-dd'),
+        start_date: data.startDate.toISOString(),
+        end_date: data.endDate.toISOString(),
         business_days: requestedDays,
         reason: data.reason || undefined,
         emergency_contact: data.emergencyContact,
@@ -410,16 +410,24 @@ export default function NewVacationRequestPage() {
                   </div>
                   <div className="mt-4 space-y-2 text-sm text-gray-600">
                     <div className="flex justify-between">
-                      <span>Direito anual:</span>
-                      <span>30 dias</span>
+                      <span>Total de solicitações:</span>
+                      <span>{stats?.total_requests || 0}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Solicitações aprovadas:</span>
-                      <span>{stats?.approved_count || 0}</span>
+                      <span>{stats?.approved_requests || 0}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Pendentes:</span>
-                      <span>{stats?.pending_count || 0}</span>
+                      <span>{stats?.pending_requests || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Dias utilizados:</span>
+                      <span>{stats?.total_days_used || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Dias pendentes:</span>
+                      <span>{stats?.total_days_pending || 0}</span>
                     </div>
                   </div>
                 </>
