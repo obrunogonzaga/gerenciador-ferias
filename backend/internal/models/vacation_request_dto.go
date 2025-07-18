@@ -70,7 +70,8 @@ func (vr *VacationRequest) ToResponse() *VacationRequestResponse {
 	}
 
 	if vr.ApprovedBy != nil {
-		response.ApprovedBy = &vr.ApprovedBy.String()
+		approvedByStr := vr.ApprovedBy.String()
+		response.ApprovedBy = &approvedByStr
 		if vr.Approver != nil && vr.Approver.ID != uuid.Nil {
 			response.Approver = vr.Approver.ToResponse()
 		}

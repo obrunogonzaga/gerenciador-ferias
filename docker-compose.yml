@@ -47,7 +47,7 @@ services:
     container_name: vacation_frontend
     restart: unless-stopped
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8080
+      NEXT_PUBLIC_API_URL: http://localhost:8080/api
     volumes:
       - ./frontend:/app
       - /app/node_modules

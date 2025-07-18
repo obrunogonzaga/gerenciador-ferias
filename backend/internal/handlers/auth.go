@@ -14,6 +14,9 @@ import (
 
 func Login(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Debug log
+		c.Header("X-Debug", "Login handler called")
+		
 		var loginReq models.LoginRequest
 		if err := c.ShouldBindJSON(&loginReq); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
